@@ -19,6 +19,9 @@ if [[ -z "$REPO_ROOT" ]]; then
     echo -e "\033[1;31mErreur: Pas dans un dépôt git (ou worktree).\033[0m"
     exit 1
 fi
+GIT_COMMON_DIR=$(git rev-parse --git-common-dir 2>/dev/null)
+REAL_REPO_ROOT=$(cd "$GIT_COMMON_DIR/.." && pwd)
+REPO_NAME=$(basename "$REAL_REPO_ROOT")
 WT_NAME=$(basename "$REPO_ROOT")
 UNIQUE_ID="${REPO_NAME}_${WT_NAME}"
 
