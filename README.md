@@ -21,7 +21,8 @@ When working on Expo / React Native projects, testing different branches or coll
 - **Zero Port Collisions:** Deterministically hashes the workspace name to assign a unique Metro port (e.g. `8154`) and Backend port (e.g. `3154`). No centralized state required!
 - **Smart Device Allocation:** Scans your available iOS Simulators and Android Emulators, securely locks one dedicated device per workspace, and automatically boots it.
 - **Multi-Agent Safe:** Employs atomic POSIX locks (`mkdir`) to ensure multiple AI agents booting exactly at the same millisecond don't race-condition the device registry.
-- **Zero Dependencies:** Written purely in bash/zsh. It only relies on built-in macOS tools (`xcrun simctl`), Android CLI (`adb`, `emulator`), and `jq`.
+- **Zero Dependencies:** Written purely in bash/zsh. It relies on built-in OS tools (`jq`, `awk`) and your existing mobile SDKs.
+- **Cross-Platform:** Works flawlessly on macOS (iOS + Android) and natively on Linux (Android only).
 
 ---
 
