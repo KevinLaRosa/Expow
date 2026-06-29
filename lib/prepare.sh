@@ -63,6 +63,12 @@ export METRO_PORT="$metro_port"
 export BACKEND_PORT="$backend_port"
 export PLATFORM="ios"
 export IOS_UDID="$udid"
+export RCT_METRO_PORT="$metro_port"
+export PORT="$metro_port"
+
+# Alias magiques
+alias xstart="npx expo start --port $metro_port"
+alias xios="npx expo run:ios --device $udid --port $metro_port"
 EOF
     if [[ -n "$VARIANT" ]]; then echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env; fi
     
@@ -71,10 +77,9 @@ EOF
     echo "Cible    : $target_name"
     echo "Ports    : Metro $metro_port, Backend $backend_port"
     echo "Variante : ${VARIANT:-<aucune>}"
-    echo -e "\n\033[1;36mCommandes suggérées :\033[0m"
-    echo "  source .expow.env"
-    echo "  npx expo start --port \$METRO_PORT"
-    echo "  npx expo run:ios --device \$IOS_UDID --port \$METRO_PORT"
+    echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
+    echo "  xstart -> lance Metro bundler"
+    echo "  xios   -> build et lance l'app sur le bon iPhone"
 
 elif [[ "$PLATFORM" == "android" ]]; then
     orig_name=$(jq -r ".\"$WT_NAME\".android.originalName // empty" "$TARGETS_FILE")
@@ -130,6 +135,12 @@ export METRO_PORT="$metro_port"
 export BACKEND_PORT="$backend_port"
 export PLATFORM="android"
 export ANDROID_SERIAL="$running_serial"
+export RCT_METRO_PORT="$metro_port"
+export PORT="$metro_port"
+
+# Alias magiques
+alias xstart="npx expo start --port $metro_port"
+alias xandroid="ANDROID_SERIAL=$running_serial npx expo run:android --port $metro_port"
 EOF
     if [[ -n "$VARIANT" ]]; then echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env; fi
 
@@ -138,10 +149,9 @@ EOF
     echo "Cible    : $orig_name ($running_serial)"
     echo "Ports    : Metro $metro_port, Backend $backend_port"
     echo "Variante : ${VARIANT:-<aucune>}"
-    echo -e "\n\033[1;36mCommandes suggérées :\033[0m"
-    echo "  source .expow.env"
-    echo "  npx expo start --port \$METRO_PORT"
-    echo "  ANDROID_SERIAL=\$ANDROID_SERIAL npx expo run:android --port \$METRO_PORT"
+    echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
+    echo "  xstart   -> lance Metro bundler"
+    echo "  xandroid -> build et lance l'app sur le bon émulateur"
 else
     echo -e "\033[1;31mErreur: Plateforme $PLATFORM non reconnue. Utilisez ios ou android.\033[0m"
     exit 1
