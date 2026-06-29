@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+EXPOW_DIR="$( cd -P "$( dirname "$SOURCE" )/.." >/dev/null 2>&1 && pwd )"
+export EXPOW_DIR
+
+cmd="${1:-}"
+if [[ -n "$cmd" ]]; then shift || true; fi
+
+case "$cmd" in
+    new)
+        "$EXPOW_DIR/lib/setup-workspace.sh" "$@"
+        ;;
+    prepare)
+        "$EXPOW_DIR/lib/prepare.sh" "$@"
+        ;;
+    list)
+        "$EXPOW_DIR/lib/cleanup.sh" list
+        ;;
+    rm)
+        "$EXPOW_DIR/lib/cleanup.sh" rm "$@"
+        ;;
+    *)
+        echo "Usage: expow {new|prepare|list|rm} [args]"
+        exit 1
+        ;;
+esac
