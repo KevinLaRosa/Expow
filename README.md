@@ -1,6 +1,6 @@
 # 🚀 Expow (Expo Worktree)
 
-**Expow** is a lightweight, zero-dependency bash CLI designed for React Native / Expo projects.
+**Expow** is a lightweight, zero-dependency bash CLI designed for Expo projects.
 
 It allows AI agents or developers to work on multiple isolated environments in parallel without running into Metro port conflicts or iOS/Android emulator collisions. 
 
