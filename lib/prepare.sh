@@ -4,7 +4,7 @@ set -euo pipefail
 source "$EXPOW_DIR/lib/ports.sh"
 source "$EXPOW_DIR/lib/targets.sh"
 
-PLATFORM=""
+PLATFORM="ios"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,18 +23,8 @@ WT_NAME=$(basename "$REPO_ROOT")
 
 init_targets
 
-saved_kind=$(jq -r ".\"$WT_NAME\".kind // empty" "$TARGETS_FILE")
-if [[ -z "$saved_kind" && -z "$PLATFORM" ]]; then
-    PLATFORM="ios"
-elif [[ -z "$PLATFORM" ]]; then
-    if [[ "$saved_kind" == "ios-sim" ]]; then PLATFORM="ios"; else PLATFORM="android"; fi
-fi
-
-allocate_target "$WT_NAME" "$REPO_ROOT" "$PLATFORM"
-
-target_kind=$(jq -r ".\"$WT_NAME\".kind" "$TARGETS_FILE")
-target_id=$(jq -r ".\"$WT_NAME\".id" "$TARGETS_FILE")
-target_name=$(jq -r ".\"$WT_NAME\".name" "$TARGETS_FILE")
+# Ensure targets are allocated for this worktree (in case it wasn't done during new)
+allocate_targets "$WT_NAME" "$REPO_ROOT"
 
 ports=$(get_ports "$WT_NAME")
 backend_port=$(echo "$ports" | awk '{print $1}')
@@ -45,10 +35,13 @@ if [[ -f .env ]]; then
     VARIANT=$(grep '^APP_VARIANT=' .env | cut -d= -f2 | tr -d '"' || true)
 fi
 
-echo -e "\033[1;34m[expow] Préparation de l'environnement pour $WT_NAME...\033[0m"
+echo -e "\033[1;34m[expow] Préparation de l'environnement $PLATFORM pour $WT_NAME...\033[0m"
 
-if [[ "$target_kind" == "ios-sim" ]]; then
+if [[ "$PLATFORM" == "ios" ]]; then
+    target_id=$(jq -r ".\"$WT_NAME\".ios.id" "$TARGETS_FILE")
+    target_name=$(jq -r ".\"$WT_NAME\".ios.name" "$TARGETS_FILE")
     udid="$target_id"
+    
     state=$(xcrun simctl list devices -j | jq -r --arg u "$udid" '.devices[].[] | select(.udid == $u) | .state')
     if [[ "$state" != "Booted" ]]; then
         echo -e "\033[1;33mDémarrage du simulateur $target_name ($udid)...\033[0m"
@@ -77,8 +70,8 @@ EOF
     echo "  npx expo start --port \$METRO_PORT"
     echo "  npx expo run:ios --device \$IOS_UDID --port \$METRO_PORT"
 
-elif [[ "$target_kind" == "android-emu" ]]; then
-    orig_name=$(jq -r ".\"$WT_NAME\".originalName" "$TARGETS_FILE")
+elif [[ "$PLATFORM" == "android" ]]; then
+    orig_name=$(jq -r ".\"$WT_NAME\".android.originalName" "$TARGETS_FILE")
     
     running_serial=""
     for serial in $(adb devices | grep emulator | awk '{print $1}'); do
@@ -113,7 +106,7 @@ elif [[ "$target_kind" == "android-emu" ]]; then
     fi
     
     echo -e "Émulateur Android détecté sur : $running_serial"
-    jq --arg k "$WT_NAME" --arg id "$running_serial" '.[$k].id = $id' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
+    jq --arg k "$WT_NAME" --arg id "$running_serial" '.[$k].android.id = $id' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
     
     echo -e "Configuration des reverse ports ADB..."
     adb -s "$running_serial" reverse --remove-all || true
@@ -138,4 +131,7 @@ EOF
     echo "  source .expow.env"
     echo "  npx expo start --port \$METRO_PORT"
     echo "  ANDROID_SERIAL=\$ANDROID_SERIAL npx expo run:android --port \$METRO_PORT"
+else
+    echo -e "\033[1;31mErreur: Plateforme $PLATFORM non reconnue. Utilisez ios ou android.\033[0m"
+    exit 1
 fi

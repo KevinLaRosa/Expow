@@ -10,7 +10,7 @@ if [[ "$cmd" == "list" ]]; then
     init_targets
     clean_stale_targets
     echo -e "\033[1;34mWorktrees actifs :\033[0m"
-    jq -r 'to_entries[] | " - \(.key): \(.value.kind) \(.value.name) (\(.value.id))"' "$TARGETS_FILE"
+    jq -r 'to_entries[] | " - \(.key):\n    iOS: \(.value.ios.name)\n    Android: \(.value.android.originalName)"' "$TARGETS_FILE"
     exit 0
 fi
 
@@ -32,12 +32,11 @@ if [[ "$cmd" == "rm" ]]; then
         fi
     fi
     
-    target_kind=$(jq -r ".\"$WT_NAME\".kind // empty" "$TARGETS_FILE")
-    if [[ "$target_kind" == "ios-sim" ]]; then
-        udid=$(jq -r ".\"$WT_NAME\".id" "$TARGETS_FILE")
-        orig=$(jq -r ".\"$WT_NAME\".originalName" "$TARGETS_FILE")
+    ios_id=$(jq -r ".\"$WT_NAME\".ios.id // empty" "$TARGETS_FILE")
+    ios_orig=$(jq -r ".\"$WT_NAME\".ios.originalName // empty" "$TARGETS_FILE")
+    if [[ -n "$ios_id" && "$ios_id" != "null" ]]; then
         echo -e "\033[1;33mRestauration du nom du simulateur iOS...\033[0m"
-        xcrun simctl rename "$udid" "$orig" 2>/dev/null || true
+        xcrun simctl rename "$ios_id" "$ios_orig" 2>/dev/null || true
     fi
     
     jq "del(.\"$WT_NAME\")" "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"

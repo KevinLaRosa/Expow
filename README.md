@@ -9,13 +9,13 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 ### ✨ Features
 - **Git Worktree integration:** Clone isolated environments without duplicating `.git`.
 - **Zero Collision:** Automatically assigns a unique Metro port and Backend port based on the worktree name.
-- **Smart Device Allocation:** Locks and boots a dedicated iOS Simulator or Android Emulator per workspace.
+- **Smart Device Allocation:** Simultaneously locks and allocates BOTH a dedicated iOS Simulator and an Android Emulator per workspace.
 - **Zero Dependencies:** Written purely in bash/zsh, leveraging built-in tools (`xcrun`, `adb`).
 
 ### 📦 Usage
-1. `expow new <name> [--platform ios|android]`
+1. `expow new <name>`
 2. `cd ~/worktrees/<repo>/<name>`
-3. `expow prepare` (Boots simulator and prepares environment)
+3. `expow prepare [--platform ios|android]` (Boots the chosen simulator and prepares the environment, default is iOS)
 4. When done: `expow rm <name>`
 
 > **Pro Tip:** Add this wrapper to your `.zshrc` or `.bashrc` so that `expow prepare` automatically injects the generated environment variables (like `$METRO_PORT`) directly into your current terminal session:
@@ -34,7 +34,7 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 #### 1. Creation (`expow new agent-x`)
 - **Git Worktree:** Runs `git worktree add` to create an isolated physical folder linked to your main repository, bypassing the need to re-download the `.git` directory.
 - **Port Hashing:** Passes the environment name (`agent-x`) through a `shasum` hash function to generate deterministic, collision-free ports (e.g. Metro on `8154`, Backend on `3154`).
-- **Target Allocation:** Queries Xcode (`xcrun simctl`) or Android (`emulator`) for an available device not currently assigned to another workspace, locks it, and records it in `~/.config/expow/targets.json`.
+- **Target Allocation:** Queries Xcode (`xcrun simctl`) AND Android (`emulator`) for available devices not currently assigned to another workspace, locks BOTH of them, and records them in `~/.config/expow/targets.json`.
 - **Environment:** Generates an isolated `.env` file (for `app.config.ts` or standard Expo usage) and runs a clean `npm install`.
 
 #### 2. Startup (`expow prepare`)
