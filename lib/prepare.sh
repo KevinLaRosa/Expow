@@ -73,8 +73,14 @@ alias xstart="npx expo start --port $metro_port"
 alias xios="npx expo run:ios --device $udid --port $metro_port"
 EOF
     if [[ -n "$VARIANT" ]]; then
-        echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env
-        echo "alias xvariant=\"npm run variant -- ios \$APP_VARIANT\"" >> .expow.env
+        V_NAME=$(echo "$VARIANT" | awk '{print $1}')
+        V_ENV=$(echo "$VARIANT" | awk '{print $2}')
+        CROSS_ENV_STR="cross-env APP_VARIANT=$V_NAME"
+        if [[ -n "$V_ENV" ]]; then CROSS_ENV_STR="$CROSS_ENV_STR API_ENV=$V_ENV"; fi
+        
+        echo "export APP_VARIANT=\"$V_NAME\"" >> .expow.env
+        if [[ -n "$V_ENV" ]]; then echo "export API_ENV=\"$V_ENV\"" >> .expow.env; fi
+        echo "alias xvariant=\"npm run variant prebuild $VARIANT && $CROSS_ENV_STR npx expo run:ios --device $udid --port $metro_port\"" >> .expow.env
     fi
     
     echo -e "\n\033[1;32m--- RÉCAPITULATIF IOS ---\033[0m"
@@ -149,8 +155,14 @@ alias xstart="npx expo start --port $metro_port"
 alias xandroid="ANDROID_SERIAL=$running_serial npx expo run:android --port $metro_port"
 EOF
     if [[ -n "$VARIANT" ]]; then
-        echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env
-        echo "alias xvariant=\"npm run variant -- android \$APP_VARIANT\"" >> .expow.env
+        V_NAME=$(echo "$VARIANT" | awk '{print $1}')
+        V_ENV=$(echo "$VARIANT" | awk '{print $2}')
+        CROSS_ENV_STR="cross-env APP_VARIANT=$V_NAME"
+        if [[ -n "$V_ENV" ]]; then CROSS_ENV_STR="$CROSS_ENV_STR API_ENV=$V_ENV"; fi
+        
+        echo "export APP_VARIANT=\"$V_NAME\"" >> .expow.env
+        if [[ -n "$V_ENV" ]]; then echo "export API_ENV=\"$V_ENV\"" >> .expow.env; fi
+        echo "alias xvariant=\"npm run variant prebuild $VARIANT && ANDROID_SERIAL=$running_serial $CROSS_ENV_STR npx expo run:android --port $metro_port\"" >> .expow.env
     fi
 
     echo -e "\n\033[1;32m--- RÉCAPITULATIF ANDROID ---\033[0m"
