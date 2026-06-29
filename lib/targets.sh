@@ -29,6 +29,7 @@ clean_stale_targets() {
 allocate_targets() {
     local wt_name="$1"
     local wt_path="$2"
+    local platform="${3:-both}"
     
     clean_stale_targets
     
@@ -37,8 +38,14 @@ allocate_targets() {
         return 0
     fi
     
+    local ios_udid=""
+    local ios_orig=""
+    local ios_name=""
+    local android_orig=""
+    
     # 1. Allocation iOS
-    local allocated_ios_udids=$(jq -r '.[].ios.id // empty' "$TARGETS_FILE" | tr '\n' ' ')
+    if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
+        local allocated_ios_udids=$(jq -r '.[].ios.id // empty' "$TARGETS_FILE" | tr '\n' ' ')
     local devices_json=$(xcrun simctl list devices available -j)
     
     local ios_udid=""
@@ -70,12 +77,14 @@ allocate_targets() {
         echo -e "\033[1;31mErreur: Aucun simulateur iOS disponible.\033[0m"
         exit 1
     fi
-    
-    local ios_name="$ios_orig ($wt_name)"
-    xcrun simctl rename "$ios_udid" "$ios_name"
+        
+        ios_name="$ios_orig ($wt_name)"
+        xcrun simctl rename "$ios_udid" "$ios_name"
+    fi
     
     # 2. Allocation Android
-    local allocated_avds=$(jq -r '.[].android.originalName // empty' "$TARGETS_FILE")
+    if [[ "$platform" == "android" || "$platform" == "both" ]]; then
+        local allocated_avds=$(jq -r '.[].android.originalName // empty' "$TARGETS_FILE")
     local avds=$(emulator -list-avds)
     
     local android_orig=""
@@ -86,9 +95,10 @@ allocate_targets() {
         fi
     done
     
-    if [[ -z "$android_orig" ]]; then
-        echo -e "\033[1;31mErreur: Aucun émulateur Android (AVD) libre.\033[0m"
-        exit 1
+        if [[ -z "$android_orig" ]]; then
+            echo -e "\033[1;31mErreur: Aucun émulateur Android (AVD) libre.\033[0m"
+            exit 1
+        fi
     fi
     
     # Save both
@@ -102,6 +112,6 @@ allocate_targets() {
        }' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
        
     echo -e "\033[1;36mCibles allouées pour $wt_name :\033[0m"
-    echo -e " - iOS     : $ios_name"
-    echo -e " - Android : $android_orig"
+    if [[ -n "$ios_name" ]]; then echo -e " - iOS     : $ios_name"; fi
+    if [[ -n "$android_orig" ]]; then echo -e " - Android : $android_orig"; fi
 }

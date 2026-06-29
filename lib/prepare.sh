@@ -38,8 +38,14 @@ fi
 echo -e "\033[1;34m[expow] Préparation de l'environnement $PLATFORM pour $WT_NAME...\033[0m"
 
 if [[ "$PLATFORM" == "ios" ]]; then
-    target_id=$(jq -r ".\"$WT_NAME\".ios.id" "$TARGETS_FILE")
-    target_name=$(jq -r ".\"$WT_NAME\".ios.name" "$TARGETS_FILE")
+    target_id=$(jq -r ".\"$WT_NAME\".ios.id // empty" "$TARGETS_FILE")
+    target_name=$(jq -r ".\"$WT_NAME\".ios.name // empty" "$TARGETS_FILE")
+    
+    if [[ -z "$target_id" || "$target_id" == "null" ]]; then
+        echo -e "\033[1;31mErreur: Aucune cible iOS n'a été allouée pour ce worktree (utilise 'expow new' avec --platform ios ou both).\033[0m"
+        exit 1
+    fi
+    
     udid="$target_id"
     
     state=$(xcrun simctl list devices -j | jq -r --arg u "$udid" '.devices[].[] | select(.udid == $u) | .state')
@@ -71,7 +77,12 @@ EOF
     echo "  npx expo run:ios --device \$IOS_UDID --port \$METRO_PORT"
 
 elif [[ "$PLATFORM" == "android" ]]; then
-    orig_name=$(jq -r ".\"$WT_NAME\".android.originalName" "$TARGETS_FILE")
+    orig_name=$(jq -r ".\"$WT_NAME\".android.originalName // empty" "$TARGETS_FILE")
+    
+    if [[ -z "$orig_name" || "$orig_name" == "null" ]]; then
+        echo -e "\033[1;31mErreur: Aucune cible Android n'a été allouée pour ce worktree (utilise 'expow new' avec --platform android ou both).\033[0m"
+        exit 1
+    fi
     
     running_serial=""
     for serial in $(adb devices | grep emulator | awk '{print $1}'); do

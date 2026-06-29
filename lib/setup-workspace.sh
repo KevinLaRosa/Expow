@@ -7,11 +7,13 @@ source "$EXPOW_DIR/lib/targets.sh"
 WT_NAME=""
 VARIANT=""
 BRANCH=""
+PLATFORM="both"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --variant) VARIANT="$2"; shift 2 ;;
         --branch) BRANCH="$2"; shift 2 ;;
+        --platform) PLATFORM="$2"; shift 2 ;;
         -*) echo -e "\033[1;31mOption inconnue: $1\033[0m"; exit 1 ;;
         *) WT_NAME="$1"; shift ;;
     esac
@@ -19,6 +21,11 @@ done
 
 if [[ -z "$WT_NAME" ]]; then
     echo -e "\033[1;31mNom du worktree requis.\033[0m"
+    exit 1
+fi
+
+if [[ "$PLATFORM" != "ios" && "$PLATFORM" != "android" && "$PLATFORM" != "both" ]]; then
+    echo -e "\033[1;31mPlatform doit être ios, android ou both.\033[0m"
     exit 1
 fi
 
@@ -60,7 +67,7 @@ backend_port=$(echo "$ports" | awk '{print $1}')
 metro_port=$(echo "$ports" | awk '{print $2}')
 
 init_targets
-allocate_targets "$WT_NAME" "$WT_PATH"
+allocate_targets "$WT_NAME" "$WT_PATH" "$PLATFORM"
 
 cat <<EOF > .env
 # Généré par expow (ne pas commiter)

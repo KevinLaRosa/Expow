@@ -13,7 +13,7 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 - **Zero Dependencies:** Written purely in bash/zsh, leveraging built-in tools (`xcrun`, `adb`).
 
 ### 📦 Usage
-1. `expow new <name>`
+1. `expow new <name> [--platform both|ios|android]` (Defaults to `both`)
 2. `cd ~/worktrees/<repo>/<name>`
 3. `expow prepare [--platform ios|android]` (Boots the chosen simulator and prepares the environment, default is iOS)
 4. When done: `expow rm <name>`
