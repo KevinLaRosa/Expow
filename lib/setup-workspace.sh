@@ -5,13 +5,11 @@ source "$EXPOW_DIR/lib/ports.sh"
 source "$EXPOW_DIR/lib/targets.sh"
 
 WT_NAME=""
-VARIANT=""
 BRANCH=""
 PLATFORM="both"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --variant) VARIANT="$2"; shift 2 ;;
         --branch) BRANCH="$2"; shift 2 ;;
         --platform) PLATFORM="$2"; shift 2 ;;
         -*) echo -e "\033[1;31mOption inconnue: $1\033[0m"; exit 1 ;;

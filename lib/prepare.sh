@@ -5,12 +5,10 @@ source "$EXPOW_DIR/lib/ports.sh"
 source "$EXPOW_DIR/lib/targets.sh"
 
 PLATFORM="ios"
-VARIANT_ARG=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --platform) PLATFORM="$2"; shift 2 ;;
-        --variant) VARIANT_ARG="$2"; shift 2 ;;
         -*) echo -e "\033[1;31mOption inconnue: $1\033[0m"; exit 1 ;;
         *) shift ;;
     esac
@@ -31,11 +29,6 @@ allocate_targets "$WT_NAME" "$REPO_ROOT"
 ports=$(get_ports "$WT_NAME")
 backend_port=$(echo "$ports" | awk '{print $1}')
 metro_port=$(echo "$ports" | awk '{print $2}')
-
-VARIANT="$VARIANT_ARG"
-if [[ -z "$VARIANT" && -f .env ]]; then
-    VARIANT=$(grep '^APP_VARIANT=' .env | cut -d= -f2 | tr -d '"' || true)
-fi
 
 echo -e "\033[1;34m[expow] Préparation de l'environnement $PLATFORM pour $WT_NAME...\033[0m"
 
@@ -72,25 +65,13 @@ export PORT="$metro_port"
 alias xstart="npx expo start --port $metro_port"
 alias xios="npx expo run:ios --device $udid --port $metro_port"
 EOF
-    if [[ -n "$VARIANT" ]]; then
-        V_NAME=$(echo "$VARIANT" | awk '{print $1}')
-        V_ENV=$(echo "$VARIANT" | awk '{print $2}')
-        CROSS_ENV_STR="cross-env APP_VARIANT=$V_NAME"
-        if [[ -n "$V_ENV" ]]; then CROSS_ENV_STR="$CROSS_ENV_STR API_ENV=$V_ENV"; fi
-        
-        echo "export APP_VARIANT=\"$V_NAME\"" >> .expow.env
-        if [[ -n "$V_ENV" ]]; then echo "export API_ENV=\"$V_ENV\"" >> .expow.env; fi
-        echo "alias xvariant=\"npm run variant prebuild $VARIANT && $CROSS_ENV_STR npx expo run:ios --device $udid --port $metro_port\"" >> .expow.env
-    fi
     
     echo -e "\n\033[1;32m--- RÉCAPITULATIF IOS ---\033[0m"
     echo "Worktree : $WT_NAME"
     echo "Cible    : $target_name"
     echo "Ports    : Metro $metro_port, Backend $backend_port"
-    echo "Variante : ${VARIANT:-<aucune>}"
     echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
-    if [[ -n "$VARIANT" ]]; then echo "  xvariant -> npm run variant -- ios $VARIANT"; fi
-    echo "  xstart   -> lance Metro bundler"
+    echo "  xstart -> lance Metro bundler"
     echo "  xios     -> build et lance l'app sur le bon iPhone"
 
 elif [[ "$PLATFORM" == "android" ]]; then
@@ -154,24 +135,12 @@ export PORT="$metro_port"
 alias xstart="npx expo start --port $metro_port"
 alias xandroid="ANDROID_SERIAL=$running_serial npx expo run:android --port $metro_port"
 EOF
-    if [[ -n "$VARIANT" ]]; then
-        V_NAME=$(echo "$VARIANT" | awk '{print $1}')
-        V_ENV=$(echo "$VARIANT" | awk '{print $2}')
-        CROSS_ENV_STR="cross-env APP_VARIANT=$V_NAME"
-        if [[ -n "$V_ENV" ]]; then CROSS_ENV_STR="$CROSS_ENV_STR API_ENV=$V_ENV"; fi
-        
-        echo "export APP_VARIANT=\"$V_NAME\"" >> .expow.env
-        if [[ -n "$V_ENV" ]]; then echo "export API_ENV=\"$V_ENV\"" >> .expow.env; fi
-        echo "alias xvariant=\"npm run variant prebuild $VARIANT && ANDROID_SERIAL=$running_serial $CROSS_ENV_STR npx expo run:android --port $metro_port\"" >> .expow.env
-    fi
 
     echo -e "\n\033[1;32m--- RÉCAPITULATIF ANDROID ---\033[0m"
     echo "Worktree : $WT_NAME"
     echo "Cible    : $orig_name ($running_serial)"
     echo "Ports    : Metro $metro_port, Backend $backend_port"
-    echo "Variante : ${VARIANT:-<aucune>}"
     echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
-    if [[ -n "$VARIANT" ]]; then echo "  xvariant -> npm run variant -- android $VARIANT"; fi
     echo "  xstart   -> lance Metro bundler"
     echo "  xandroid -> build et lance l'app sur le bon émulateur"
 else

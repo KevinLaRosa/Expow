@@ -14,13 +14,13 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 
 ### 📦 Usage
 1. **Create an isolated environment:**
-   `expow new <name> [--platform both|ios|android] [--variant "my variant"]`
+   `expow new <name> [--platform both|ios|android]`
 2. **Navigate to it:**
    `cd ~/worktrees/<repo>/<name>`
 3. **Boot and Prepare:**
-   `expow prepare [--platform ios|android] [--variant "my variant"]`
+   `expow prepare [--platform ios|android]`
 4. **Run the App (via Magic Aliases):**
-   Simply type `xios` or `xstart` (Expow automatically creates these aliases so you don't have to manually pass ports or device IDs). If you specified a variant, `xvariant` is also available.
+   Simply type `xios` or `xstart` (Expow automatically creates these aliases so you don't have to manually pass ports or device IDs).
 5. **Teardown:**
    `expow rm <name>`
 
@@ -46,7 +46,7 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 #### 2. Startup (`expow prepare`)
 - **Device Boot:** Reads `targets.json` to identify the assigned device (e.g., iPhone 16 Pro). If it's offline, it boots it up.
 - **ADB Tunneling:** If Android, it sets up an ADB reverse proxy (`adb reverse tcp:8154 tcp:8154`) so the emulator can talk to your isolated Metro server.
-- **Shell Env & Magic Aliases:** Generates an `.expow.env` file containing variables (`METRO_PORT`, `IOS_UDID`) and **Magic Aliases** (`xstart`, `xios`, `xandroid`, `xvariant`). This file is ready to be sourced by your shell (or auto-sourced via the wrapper above).
+- **Shell Env & Magic Aliases:** Generates an `.expow.env` file containing variables (`METRO_PORT`, `IOS_UDID`) and **Magic Aliases** (`xstart`, `xios`, `xandroid`). This file is ready to be sourced by your shell (or auto-sourced via the wrapper above).
 - **Execution:** Instead of copy-pasting long commands with ports and IDs, you simply type `xios` (or `xandroid`) in your terminal to build and run the app.
 
 #### 3. Teardown (`expow rm agent-x`)
