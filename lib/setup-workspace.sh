@@ -37,6 +37,11 @@ REPO_NAME=$(basename "$REPO_ROOT")
 PKG_MANAGER="npm"
 WORKTREES_BASE="$HOME/worktrees"
 
+GLOBAL_CONF="$HOME/.config/expow/config"
+if [[ -f "$GLOBAL_CONF" ]]; then
+    source "$GLOBAL_CONF"
+fi
+
 WT_PATH="$WORKTREES_BASE/$REPO_NAME/$WT_NAME"
 UNIQUE_ID="${REPO_NAME}_${WT_NAME}"
 

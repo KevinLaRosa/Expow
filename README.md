@@ -34,6 +34,17 @@ By leveraging `git worktree`, deterministic port hashing, and dynamic device all
 >   fi
 > }
 > ```
+> 
+> ### ⚙️ Configuration (Optional)
+> 
+> By default, Expow creates worktrees **OUTSIDE** of your main repository (in `~/worktrees/`). 
+> **This is extremely important for React Native / Expo:** if a worktree is created inside the main repo, the Metro Bundler's `haste-map` will scan upwards, detect duplicate `node_modules`, and crash massively due to naming collisions.
+> 
+> If you want to change the default base path (e.g. to put them on an external drive), create a global configuration file at `~/.config/expow/config`:
+> ```bash
+> # ~/.config/expow/config
+> WORKTREES_BASE="/Volumes/SSD/worktrees"
+> ```
 
 ### 🧠 How it works under the hood
 
