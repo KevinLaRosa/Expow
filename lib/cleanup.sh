@@ -36,10 +36,11 @@ if [[ "$cmd" == "rm" ]]; then
     wt_path=$(jq -r ".\"$UNIQUE_ID\".path // empty" "$TARGETS_FILE")
     if [[ -z "$wt_path" ]]; then
         wt_path=$(git worktree list | grep "/$WT_NAME " | awk '{print $1}' || true)
-        if [[ -z "$wt_path" ]]; then
-            echo -e "\033[1;31mWorktree $WT_NAME introuvable.\033[0m"
-            exit 1
-        fi
+    fi
+    
+    if [[ -z "$wt_path" && $(jq -r "has(\"$UNIQUE_ID\")" "$TARGETS_FILE") == "false" ]]; then
+        echo -e "\033[1;31mRien à nettoyer. Le worktree ou la cible $WT_NAME est introuvable.\033[0m"
+        exit 0
     fi
     
     ios_id=$(jq -r ".\"$UNIQUE_ID\".ios.id // empty" "$TARGETS_FILE")
@@ -68,13 +69,19 @@ if [[ "$cmd" == "rm" ]]; then
         kill -9 $(lsof -Pi :$metro_port -sTCP:LISTEN -t) || true
     fi
     
-    echo -e "\033[1;34mSuppression du worktree git...\033[0m"
-    if cd "$wt_path" 2>/dev/null; then
-        main_repo=$(git rev-parse --git-common-dir)
-        cd "$main_repo"
-        git worktree remove -f "$wt_path"
-    else
-        echo -e "\033[1;33mLe dossier $wt_path est introuvable. Effectuez un 'git worktree prune' depuis votre dépôt principal si nécessaire.\033[0m"
+    if [[ -n "$wt_path" ]]; then
+        if [[ "$wt_path" == "$REAL_REPO_ROOT" ]]; then
+            echo -e "\033[1;34mDépôt principal détecté. Suppression de la réservation sans effacer les fichiers.\033[0m"
+        else
+            echo -e "\033[1;34mSuppression du worktree git...\033[0m"
+            if cd "$wt_path" 2>/dev/null; then
+                main_repo=$(git rev-parse --git-common-dir)
+                cd "$main_repo"
+                git worktree remove -f "$wt_path"
+            else
+                echo -e "\033[1;33mLe dossier $wt_path est introuvable. Effectuez un 'git worktree prune' depuis votre dépôt principal si nécessaire.\033[0m"
+            fi
+        fi
     fi
     
     echo -e "\033[1;32mWorktree $WT_NAME supprimé avec succès.\033[0m"
