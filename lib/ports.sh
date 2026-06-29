@@ -2,8 +2,11 @@
 
 get_ports() {
     local name="$1"
-    # Generate robust hash from name to avoid anagram collisions
-    local shasum_out=$(echo -n "$name" | shasum | awk '{print $1}')
+    local hash_cmd="shasum"
+    if ! command -v shasum >/dev/null 2>&1 && command -v sha1sum >/dev/null 2>&1; then
+        hash_cmd="sha1sum"
+    fi
+    local shasum_out=$(echo -n "$name" | $hash_cmd | awk '{print $1}')
     local hex_prefix=${shasum_out:0:4}
     local hash=$(( 16#$hex_prefix % 100 ))
     local offset=$(( hash + 1 ))

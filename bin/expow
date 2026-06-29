@@ -12,7 +12,11 @@ export EXPOW_DIR
 
 check_dependencies() {
     local missing=()
-    for cmd in jq awk shasum git; do
+    local hash_cmd="shasum"
+    if ! command -v shasum >/dev/null 2>&1 && command -v sha1sum >/dev/null 2>&1; then
+        hash_cmd="sha1sum"
+    fi
+    for cmd in jq awk "$hash_cmd" git; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing+=("$cmd")
         fi

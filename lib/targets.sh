@@ -26,7 +26,9 @@ clean_stale_targets() {
         if [[ -n "$name" && "$name" != "null" && ! -d "$w_path" ]]; then
             echo -e "\033[1;33mNettoyage de la cible périmée pour : $name\033[0m"
             if [[ -n "$ios_id" && "$ios_id" != "null" ]]; then
-                xcrun simctl rename "$ios_id" "$ios_orig" 2>/dev/null || true
+                if command -v xcrun >/dev/null 2>&1; then
+                    xcrun simctl rename "$ios_id" "$ios_orig" 2>/dev/null || true
+                fi
             fi
             stale_keys+=("$name")
         fi
@@ -59,7 +61,15 @@ allocate_targets() {
     
     # 1. Allocation iOS
     if [[ "$platform" == "ios" || "$platform" == "both" ]]; then
-        local allocated_ios_udids=$(jq -r '.[].ios.id // empty' "$TARGETS_FILE" | tr '\n' ' ')
+        if ! command -v xcrun >/dev/null 2>&1; then
+            if [[ "$platform" == "ios" ]]; then
+                echo -e "\033[1;31mErreur: 'xcrun' introuvable. iOS n'est supporté que sur macOS.\033[0m"
+                exit 1
+            else
+                echo -e "\033[1;33mAttention: 'xcrun' introuvable (pas sur macOS ?). Allocation iOS ignorée.\033[0m"
+            fi
+        else
+            local allocated_ios_udids=$(jq -r '.[].ios.id // empty' "$TARGETS_FILE" | tr '\n' ' ')
     local devices_json=$(xcrun simctl list devices available -j)
     
     local ios_udid=""
@@ -94,6 +104,7 @@ allocate_targets() {
         
         ios_name="$ios_orig ($target_id)"
         xcrun simctl rename "$ios_udid" "$ios_name"
+        fi
     fi
     
     # 2. Allocation Android
