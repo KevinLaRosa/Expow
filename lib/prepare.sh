@@ -5,10 +5,12 @@ source "$EXPOW_DIR/lib/ports.sh"
 source "$EXPOW_DIR/lib/targets.sh"
 
 PLATFORM="ios"
+VARIANT_ARG=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --platform) PLATFORM="$2"; shift 2 ;;
+        --variant) VARIANT_ARG="$2"; shift 2 ;;
         -*) echo -e "\033[1;31mOption inconnue: $1\033[0m"; exit 1 ;;
         *) shift ;;
     esac
@@ -30,8 +32,8 @@ ports=$(get_ports "$WT_NAME")
 backend_port=$(echo "$ports" | awk '{print $1}')
 metro_port=$(echo "$ports" | awk '{print $2}')
 
-VARIANT=""
-if [[ -f .env ]]; then
+VARIANT="$VARIANT_ARG"
+if [[ -z "$VARIANT" && -f .env ]]; then
     VARIANT=$(grep '^APP_VARIANT=' .env | cut -d= -f2 | tr -d '"' || true)
 fi
 
