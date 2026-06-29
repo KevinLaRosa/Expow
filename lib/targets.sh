@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
 TARGETS_FILE="$HOME/.config/expow/targets.json"
+LOCK_DIR="$HOME/.config/expow/targets.lock"
+
+acquire_lock() {
+    while ! mkdir "$LOCK_DIR" 2>/dev/null; do
+        sleep 0.1
+    done
+}
+
+release_lock() {
+    rmdir "$LOCK_DIR" 2>/dev/null || true
+}
 
 init_targets() {
     mkdir -p "$HOME/.config/expow"
@@ -27,14 +38,17 @@ clean_stale_targets() {
 }
 
 allocate_targets() {
-    local wt_name="$1"
+    local target_id="$1"
     local wt_path="$2"
     local platform="${3:-both}"
     
+    acquire_lock
+    
     clean_stale_targets
     
-    local existing=$(jq -r ".\"$wt_name\" // empty" "$TARGETS_FILE")
+    local existing=$(jq -r ".\"$target_id\" // empty" "$TARGETS_FILE")
     if [[ -n "$existing" ]]; then
+        release_lock
         return 0
     fi
     
@@ -78,7 +92,7 @@ allocate_targets() {
         exit 1
     fi
         
-        ios_name="$ios_orig ($wt_name)"
+        ios_name="$ios_orig ($target_id)"
         xcrun simctl rename "$ios_udid" "$ios_name"
     fi
     
@@ -102,7 +116,7 @@ allocate_targets() {
     fi
     
     # Save both
-    jq --arg k "$wt_name" --arg path "$wt_path" \
+    jq --arg k "$target_id" --arg path "$wt_path" \
        --arg ios_id "$ios_udid" --arg ios_orig "$ios_orig" --arg ios_name "$ios_name" \
        --arg android_orig "$android_orig" \
        '.[$k] = {
@@ -111,7 +125,9 @@ allocate_targets() {
            android: {id: "", originalName: $android_orig, name: $android_orig}
        }' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
        
-    echo -e "\033[1;36mCibles allouées pour $wt_name :\033[0m"
+    release_lock
+       
+    echo -e "\033[1;36mCibles allouées pour $target_id :\033[0m"
     if [[ -n "$ios_name" ]]; then echo -e " - iOS     : $ios_name"; fi
     if [[ -n "$android_orig" ]]; then echo -e " - Android : $android_orig"; fi
 }

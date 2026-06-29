@@ -21,9 +21,17 @@ if [[ "$cmd" == "rm" ]]; then
         exit 1
     fi
     
+    REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null 2>&1)
+    if [[ -z "$REPO_ROOT" ]]; then
+        echo -e "\033[1;31mErreur: Pas dans un dépôt git. Placez-vous dans le dépôt pour supprimer un worktree.\033[0m"
+        exit 1
+    fi
+    REPO_NAME=$(basename "$REPO_ROOT")
+    UNIQUE_ID="${REPO_NAME}_${WT_NAME}"
+    
     init_targets
     
-    wt_path=$(jq -r ".\"$WT_NAME\".path // empty" "$TARGETS_FILE")
+    wt_path=$(jq -r ".\"$UNIQUE_ID\".path // empty" "$TARGETS_FILE")
     if [[ -z "$wt_path" ]]; then
         wt_path=$(git worktree list | grep "/$WT_NAME " | awk '{print $1}' || true)
         if [[ -z "$wt_path" ]]; then
@@ -32,17 +40,27 @@ if [[ "$cmd" == "rm" ]]; then
         fi
     fi
     
-    ios_id=$(jq -r ".\"$WT_NAME\".ios.id // empty" "$TARGETS_FILE")
-    ios_orig=$(jq -r ".\"$WT_NAME\".ios.originalName // empty" "$TARGETS_FILE")
+    ios_id=$(jq -r ".\"$UNIQUE_ID\".ios.id // empty" "$TARGETS_FILE")
+    ios_orig=$(jq -r ".\"$UNIQUE_ID\".ios.originalName // empty" "$TARGETS_FILE")
     if [[ -n "$ios_id" && "$ios_id" != "null" ]]; then
         echo -e "\033[1;33mRestauration du nom du simulateur iOS...\033[0m"
         xcrun simctl rename "$ios_id" "$ios_orig" 2>/dev/null || true
     fi
     
-    jq "del(.\"$WT_NAME\")" "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
+    android_id=$(jq -r ".\"$UNIQUE_ID\".android.id // empty" "$TARGETS_FILE")
     
-    ports=$(get_ports "$WT_NAME")
+    jq "del(.\"$UNIQUE_ID\")" "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
+    
+    ports=$(get_ports "$UNIQUE_ID")
+    backend_port=$(echo "$ports" | awk '{print $1}')
     metro_port=$(echo "$ports" | awk '{print $2}')
+    
+    if [[ -n "$android_id" && "$android_id" != "null" ]]; then
+        echo -e "\033[1;33mNettoyage des reverse ports ADB...\033[0m"
+        adb -s "$android_id" reverse --remove tcp:$metro_port 2>/dev/null || true
+        adb -s "$android_id" reverse --remove tcp:$backend_port 2>/dev/null || true
+    fi
+    
     if lsof -Pi :$metro_port -sTCP:LISTEN -t >/dev/null 2>&1; then
         echo -e "\033[1;33mArrêt du processus utilisant le port Metro $metro_port...\033[0m"
         kill -9 $(lsof -Pi :$metro_port -sTCP:LISTEN -t) || true

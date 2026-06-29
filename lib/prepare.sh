@@ -20,21 +20,22 @@ if [[ -z "$REPO_ROOT" ]]; then
     exit 1
 fi
 WT_NAME=$(basename "$REPO_ROOT")
+UNIQUE_ID="${REPO_NAME}_${WT_NAME}"
 
 init_targets
 
 # Ensure targets are allocated for this worktree (in case it wasn't done during new)
-allocate_targets "$WT_NAME" "$REPO_ROOT"
+allocate_targets "$UNIQUE_ID" "$REPO_ROOT"
 
-ports=$(get_ports "$WT_NAME")
+ports=$(get_ports "$UNIQUE_ID")
 backend_port=$(echo "$ports" | awk '{print $1}')
 metro_port=$(echo "$ports" | awk '{print $2}')
 
 echo -e "\033[1;34m[expow] Préparation de l'environnement $PLATFORM pour $WT_NAME...\033[0m"
 
 if [[ "$PLATFORM" == "ios" ]]; then
-    target_id=$(jq -r ".\"$WT_NAME\".ios.id // empty" "$TARGETS_FILE")
-    target_name=$(jq -r ".\"$WT_NAME\".ios.name // empty" "$TARGETS_FILE")
+    target_id=$(jq -r ".\"$UNIQUE_ID\".ios.id // empty" "$TARGETS_FILE")
+    target_name=$(jq -r ".\"$UNIQUE_ID\".ios.name // empty" "$TARGETS_FILE")
     
     if [[ -z "$target_id" || "$target_id" == "null" ]]; then
         echo -e "\033[1;31mErreur: Aucune cible iOS n'a été allouée pour ce worktree (utilise 'expow new' avec --platform ios ou both).\033[0m"
@@ -75,7 +76,7 @@ EOF
     echo "  xios     -> build et lance l'app sur le bon iPhone"
 
 elif [[ "$PLATFORM" == "android" ]]; then
-    orig_name=$(jq -r ".\"$WT_NAME\".android.originalName // empty" "$TARGETS_FILE")
+    orig_name=$(jq -r ".\"$UNIQUE_ID\".android.originalName // empty" "$TARGETS_FILE")
     
     if [[ -z "$orig_name" || "$orig_name" == "null" ]]; then
         echo -e "\033[1;31mErreur: Aucune cible Android n'a été allouée pour ce worktree (utilise 'expow new' avec --platform android ou both).\033[0m"
@@ -115,7 +116,7 @@ elif [[ "$PLATFORM" == "android" ]]; then
     fi
     
     echo -e "Émulateur Android détecté sur : $running_serial"
-    jq --arg k "$WT_NAME" --arg id "$running_serial" '.[$k].android.id = $id' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
+    jq --arg k "$UNIQUE_ID" --arg id "$running_serial" '.[$k].android.id = $id' "$TARGETS_FILE" > "$TARGETS_FILE.tmp" && mv "$TARGETS_FILE.tmp" "$TARGETS_FILE"
     
     echo -e "Configuration des reverse ports ADB..."
     adb -s "$running_serial" reverse --remove-all || true

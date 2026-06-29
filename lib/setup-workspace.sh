@@ -27,7 +27,7 @@ if [[ "$PLATFORM" != "ios" && "$PLATFORM" != "android" && "$PLATFORM" != "both" 
     exit 1
 fi
 
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null 2>&1)
 if [[ -z "$REPO_ROOT" ]]; then
     echo -e "\033[1;31mErreur: Pas dans un dépôt git.\033[0m"
     exit 1
@@ -37,45 +37,40 @@ REPO_NAME=$(basename "$REPO_ROOT")
 PKG_MANAGER="npm"
 WORKTREES_BASE="$HOME/worktrees"
 
+WT_PATH="$WORKTREES_BASE/$REPO_NAME/$WT_NAME"
+UNIQUE_ID="${REPO_NAME}_${WT_NAME}"
+
 CONF_FILE="$HOME/.config/expow/repos/$REPO_NAME.conf"
 if [[ -f "$CONF_FILE" ]]; then
     source "$CONF_FILE"
 fi
-
-WT_PATH="$WORKTREES_BASE/$REPO_NAME/$WT_NAME"
 
 if [[ -d "$WT_PATH" ]]; then
     echo -e "\033[1;31mLe worktree $WT_PATH existe déjà.\033[0m"
     exit 1
 fi
 
-echo -e "\033[1;34mCréation du worktree $WT_NAME dans $WT_PATH...\033[0m"
-mkdir -p "$WORKTREES_BASE/$REPO_NAME"
-
-if [[ -n "$BRANCH" ]]; then
-    git worktree add -b "$WT_NAME" "$WT_PATH" "$BRANCH"
+echo -e "\033[1;34m[1/3] Création du worktree Git pour $WT_NAME...\033[0m"
+if git show-ref --verify --quiet "refs/heads/$WT_NAME"; then
+    git worktree add "$WT_PATH" "$WT_NAME"
 else
-    git worktree add -b "$WT_NAME" "$WT_PATH"
+    git worktree add "$WT_PATH" -b "$WT_NAME"
 fi
 
 cd "$WT_PATH"
 
-ports=$(get_ports "$WT_NAME")
+ports=$(get_ports "$UNIQUE_ID")
 backend_port=$(echo "$ports" | awk '{print $1}')
 metro_port=$(echo "$ports" | awk '{print $2}')
 
 init_targets
-allocate_targets "$WT_NAME" "$WT_PATH" "$PLATFORM"
+allocate_targets "$UNIQUE_ID" "$WT_PATH" "$PLATFORM"
 
 cat <<EOF > .env
 # Généré par expow (ne pas commiter)
 EXPO_PUBLIC_WORKSPACE_NAME="$WT_NAME"
 EXPO_PUBLIC_API_URL="http://localhost:$backend_port"
 EOF
-if [[ -n "$VARIANT" ]]; then
-    echo "APP_VARIANT=\"$VARIANT\"" >> .env
-fi
-
 echo ".env" >> .gitignore
 echo ".expow.env" >> .gitignore
 
