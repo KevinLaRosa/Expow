@@ -10,6 +10,25 @@ done
 EXPOW_DIR="$( cd -P "$( dirname "$SOURCE" )/.." >/dev/null 2>&1 && pwd )"
 export EXPOW_DIR
 
+check_dependencies() {
+    local missing=()
+    for cmd in jq awk shasum git; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
+        fi
+    done
+    
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        echo -e "\033[1;31mErreur: Dépendances système manquantes pour Expow :\033[0m"
+        for m in "${missing[@]}"; do
+            echo -e "  - \033[1;33m$m\033[0m"
+        done
+        echo -e "\nVeuillez les installer (ex: 'brew install jq') et réessayer."
+        exit 1
+    fi
+}
+check_dependencies
+
 cmd="${1:-}"
 if [[ -n "$cmd" ]]; then shift || true; fi
 
