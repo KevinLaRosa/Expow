@@ -70,7 +70,10 @@ export PORT="$metro_port"
 alias xstart="npx expo start --port $metro_port"
 alias xios="npx expo run:ios --device $udid --port $metro_port"
 EOF
-    if [[ -n "$VARIANT" ]]; then echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env; fi
+    if [[ -n "$VARIANT" ]]; then
+        echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env
+        echo "alias xvariant=\"npm run variant -- ios \$APP_VARIANT\"" >> .expow.env
+    fi
     
     echo -e "\n\033[1;32m--- RÉCAPITULATIF IOS ---\033[0m"
     echo "Worktree : $WT_NAME"
@@ -78,8 +81,9 @@ EOF
     echo "Ports    : Metro $metro_port, Backend $backend_port"
     echo "Variante : ${VARIANT:-<aucune>}"
     echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
-    echo "  xstart -> lance Metro bundler"
-    echo "  xios   -> build et lance l'app sur le bon iPhone"
+    if [[ -n "$VARIANT" ]]; then echo "  xvariant -> npm run variant -- ios $VARIANT"; fi
+    echo "  xstart   -> lance Metro bundler"
+    echo "  xios     -> build et lance l'app sur le bon iPhone"
 
 elif [[ "$PLATFORM" == "android" ]]; then
     orig_name=$(jq -r ".\"$WT_NAME\".android.originalName // empty" "$TARGETS_FILE")
@@ -142,7 +146,10 @@ export PORT="$metro_port"
 alias xstart="npx expo start --port $metro_port"
 alias xandroid="ANDROID_SERIAL=$running_serial npx expo run:android --port $metro_port"
 EOF
-    if [[ -n "$VARIANT" ]]; then echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env; fi
+    if [[ -n "$VARIANT" ]]; then
+        echo "export APP_VARIANT=\"$VARIANT\"" >> .expow.env
+        echo "alias xvariant=\"npm run variant -- android \$APP_VARIANT\"" >> .expow.env
+    fi
 
     echo -e "\n\033[1;32m--- RÉCAPITULATIF ANDROID ---\033[0m"
     echo "Worktree : $WT_NAME"
@@ -150,6 +157,7 @@ EOF
     echo "Ports    : Metro $metro_port, Backend $backend_port"
     echo "Variante : ${VARIANT:-<aucune>}"
     echo -e "\n\033[1;36mAlias disponibles (plus besoin des variables !) :\033[0m"
+    if [[ -n "$VARIANT" ]]; then echo "  xvariant -> npm run variant -- android $VARIANT"; fi
     echo "  xstart   -> lance Metro bundler"
     echo "  xandroid -> build et lance l'app sur le bon émulateur"
 else
